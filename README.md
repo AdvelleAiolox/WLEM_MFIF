@@ -51,15 +51,19 @@ First, set a value as the limit to differ the two different treatement.
 
 首先设置一个分割权值。
 
+If at one point, there exist one imgL which have a value bigger than the limit, chose the img with the biggest value of imgdiff for this point in order to keep the edge clear. 
+
 对于存在imgL的值大于分割权值的点，直接取用imgdiff中值最大的图的值，使得边缘保留足够的清晰度。
+
+If at one point, all the value of imgL are smaller than the limit, weighted overlay is needed to blur the transition edge. The specific operation is to multiply the imgdiff of all images by a weight (I use the fifth power of the value) and accumulate them, then overlay all the images. The weight of each image is the weighted imgdiff divided by the accumulated sum.
 
 对于所有imgL的值均小于分割权值的点，需要进行加权叠加以模糊过渡边缘，具体操作为将所有图片的imgdiff乘一个权值（我采用的是值的五次方）并进行累加，然后叠加所有图，每个图的权重为加权后的imgdiff除以累加的和。
 
 ```
-float pick = 0.9;                                //分割权值
+float pick = 0.9;                                	//分割权值 set the limit
 for (int i = 0; i < rows; i++)
 {
-	flag = false;                                  //标记是否有图的imgL大于分割权值
+	flag = false;                                  	//标记是否有图的imgL大于分割权值 the flag to show if there is a value of imgL bigger than the limit
 	for (int j = 0; j < n; j++)
 	{
 		p.push_back(imgdiff[j].ptr<float>(i));
@@ -76,14 +80,14 @@ for (int i = 0; i < rows; i++)
 			{
 				flag = true;
 			}
-			if (*(p[k] + imgdiff[k].channels() * j) > max)           //记录最大值及其图片编号
+			if (*(p[k] + imgdiff[k].channels() * j) > max)           //记录最大值及其图片编号 note the biggest value and the order of the img
 			{
 				nm = k;
 				max = *(p[k] + imgdiff[k].channels() * j);
 			}
-			sum = sum + pow(*(p[k] + imgdiff[k].channels() * j), 5); //权值累加
+			sum = sum + pow(*(p[k] + imgdiff[k].channels() * j), 5); //权值累加 accumulate the weighted
 		}
-		if (flag)                                                  //设置imgdiff中值最大的图的值权值为1，其余均为0，保留图片边界的清晰度
+		if (flag)                                                  	 //设置imgdiff中值最大的图的值权值为1，其余均为0，保留图片边界的清晰度 Set the weight of the image with the largest value in imgdiff to 1, and the rest to 0, to preserve the clarity of the image boundaries
 		{
 			for (int k = 0; k < n; k++)
 			{
@@ -91,7 +95,7 @@ for (int i = 0; i < rows; i++)
 			}
 			*(p[nm] + imgdiff[nm].channels() * j) = 1.0;
 		}
-		else                                                       //分配权重，融合图片非边界部分，使得分割区过渡自然
+		else                                                       	 //分配权重，融合图片非边界部分，使得分割区过渡自然 Assign weights and merge the non-boundary parts of the image to make the segmented areas transition naturally.
 		{
 			for (int k = 0; k < n; k++)
 			{
